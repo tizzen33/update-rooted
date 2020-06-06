@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.23  - TheHogNL & TerrorSource & yjb - 15-05-2020"
+echo "Version: 4.24  - TheHogNL & TerrorSource & yjb - 6-6-2020"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -602,7 +602,7 @@ downloadUpgradeFile() {
 	#check if there is a valid upgrade script
 	if [ "$ARCH" == "nxt" ] 
 	then
-		MD5SCRIPT="63a35939066a545a47adb2d8fda8d2c6"
+		MD5SCRIPT="3c15efea30c81ab3591149983051f788"
 	else
 		MD5SCRIPT="687bdd82601817956aa8a8b9e80eb345"
 	fi
@@ -621,7 +621,7 @@ downloadUpgradeFile() {
 	/bin/sed -i 's/^\(FEATURES=.*\)AUTO_EXECUTE/\1/' $PKGCACHE/upgrade-$ARCH.sh 
 
 	#make sure the upgrade script doesn't reboot the device after finishing
-	/bin/sed -i '/shutdown/c\#removed shutdown' $PKGCACHE/upgrade-$ARCH.sh 
+	/bin/sed -i '/shutdown/c\#rkemoved shutdown' $PKGCACHE/upgrade-$ARCH.sh 
 
 	#removing the curl logging post to the servic center
 	/bin/sed -i '/curl.*31080/c\echo ""' $PKGCACHE/upgrade-$ARCH.sh

@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.24  - TheHogNL & TerrorSource & yjb - 6-6-2020"
+echo "Version: 4.25  - TheHogNL & TerrorSource & yjb - 29-8-2020"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -346,7 +346,7 @@ getVersion() {
 		return
 	fi
 
-	if echo $VERSIONS| grep -q $RUNNINGVERSION
+	if echo $VERSIONS| grep -qE  "^[0-9]+\.[0-9]+\.[0-9]+$"
 	then
 		echo "You are currently running version $RUNNINGVERSION on a $ARCH with flavour $FLAV"
 	else

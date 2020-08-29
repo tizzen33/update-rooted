@@ -346,7 +346,7 @@ getVersion() {
 		return
 	fi
 
-	if echo $VERSIONS| grep -qE  "^[0-9]+\.[0-9]+\.[0-9]+$"
+	if echo $VERSIONS| grep -qE  "[0-9]+\.[0-9]+\.[0-9]+"
 	then
 		echo "You are currently running version $RUNNINGVERSION on a $ARCH with flavour $FLAV"
 	else

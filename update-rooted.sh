@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.27  - TheHogNL & TerrorSource & yjb - 11-9-2020"
+echo "Version: 4.28  - TheHogNL & TerrorSource & yjb - 3-10-2020"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -215,6 +215,12 @@ editAutoBrightness(){
 
 
 editActivation() {
+	#remove AWS IOT token file and restart bxtproxy
+	if [ -f /qmf/var/hcb_bxtproxy-oidcIdToken.json ]
+	then
+		rm -f  /qmf/var/hcb_bxtproxy-oidcIdToken.json
+		killall -9 hcb_bxtproxy
+	fi
 	#editing config_happ_scsync.xml for activation
 	sed -i 's~Standalone~Toon~g' /qmf/config/config_happ_scsync.xml
 	sed -i 's~<activated>0</activated>~<activated>1</activated>~g' /qmf/config/config_happ_scsync.xml

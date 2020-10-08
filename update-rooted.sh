@@ -163,6 +163,37 @@ editTenantSettingsFile(){
 }
 
 checkCApem() {
+        UPDATECA=false
+        SHA256ONLINE=`curl -Nks https://curl.haxx.se/ca/cacert.pem.sha256 | cut -d\  -f1`
+        SHA256CURRENT='false'
+        if [ -f /usr/local/share/ca-certificates/mozilla.crt ]
+        then
+                SHA256CURRENT=`/usr/bin/sha256sum /usr/local/share/ca-certificates/mozilla.crt | cut -d\  -f1`
+        fi
+        if [ !  "$SHA256CURRENT" == "$SHA256ONLINE" ] && [ -n "$SHA256ONLINE" ]
+        then
+                echo "There is a new version of the Mozilla CA pem file. Downloading it!"
+                /usr/bin/curl -Nks https://curl.haxx.se/ca/cacert.pem -o /tmp/mozilla.crt
+                SHA256NEW=`/usr/bin/sha256sum /tmp/mozilla.crt | cut -d\  -f1`
+                if [ "$SHA256ONLINE" == "$SHA256NEW" ]
+                then
+                        echo "Download ok! Replacing Mozilla CA pem file!"
+                        mv -f /tmp/mozilla.crt /usr/local/share/ca-certificates/mozilla.crt
+                        UPDATECA=true
+                fi
+        fi
+
+        if [ ! -f /usr/local/share/ca-certificates/DomeinServerCA2020.crt ]
+        then
+                echo "Adding intermediate Staat der Nederlanden Domein Server CA 2020 - for NLalert API"
+                /usr/bin/curl -Nks https://cert.pkioverheid.nl/DomeinServerCA2020.cer -o /tmp/DomeinServerCA2020.cer
+                openssl x509 -inform der -in /tmp/DomeinServerCA2020.cer -out /usr/local/share/ca-certificates/DomeinServerCA2020.crt
+                UPDATECA=true
+        fi
+        if [ "$UPDATECA" = true ]
+        then
+                /usr/sbin/update-ca-certificates
+        fi
 }
 
 disableHapps() {

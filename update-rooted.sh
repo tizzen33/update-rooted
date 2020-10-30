@@ -514,6 +514,9 @@ makeBackupFixFiles() {
 	mv /root/config_happ_scsync.save /root/backup_files/config_happ_scsync.save
 	mv /root/hosts.save /root/backup_files/hosts.save
 	mv /root/inittab.save /root/backup_files/inittab.save
+	mv /root/iptables.backup /root/backup_files/iptables.backup
+	mv /root/iptables.save /root/backup_files/iptables.save
+	mv /root/passwd.backup /root/backup_files/passwd.backup
 	
 	sync
 }

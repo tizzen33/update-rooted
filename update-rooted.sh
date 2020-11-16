@@ -37,14 +37,14 @@ usage() {
 
 autoUpdate() {
 	MD5ME=`/usr/bin/md5sum $0 | cut -d\  -f1`
-	MD5ONLINE=`curl --compressed -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/master/update-rooted.md5 | cut -d\  -f1`
+	MD5ONLINE=`curl --compressed -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/main/update-rooted.md5 | cut -d\  -f1`
 	if [ !  "$MD5ME" == "$MD5ONLINE" ]
 	then
 		echo "Warning: there is a new version of update-rooted.sh available! Do you want me to download it for you (yes/no)?" 
 		if ! $UNATTENDED ; then read QUESTION ; fi	
 		if [  "$QUESTION" == "yes" ] &&  ! $UNATTENDED #no auto update in unattended mode
 		then
-			curl --compressed -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/master/update-rooted.sh -o $0
+			curl --compressed -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/main/update-rooted.sh -o $0
 			echo "Ok I downloaded the update. Restarting..." 
 			/bin/sh $0 $@
 			exit
@@ -344,7 +344,7 @@ installBusybox() {
 }
 
 getVersion() {
-	VERSIONS=`/usr/bin/curl -Nks --compressed "https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/master/toonversions" | /usr/bin/tr '\n\r' ' ' | /bin/grep STARTTOONVERSIONS | /bin/sed 's/.*#STARTTOONVERSIONS//' | /bin/sed 's/#ENDTOONVERSIONS.*//' | xargs`
+	VERSIONS=`/usr/bin/curl -Nks --compressed "https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/main/toonversions" | /usr/bin/tr '\n\r' ' ' | /bin/grep STARTTOONVERSIONS | /bin/sed 's/.*#STARTTOONVERSIONS//' | /bin/sed 's/#ENDTOONVERSIONS.*//' | xargs`
 
 	if [ "$VERSIONS" == "" ]
 	then
@@ -829,14 +829,14 @@ downloadResourceFile() {
 		/usr/bin/unzip -oq /tmp/resources-$ARCH-$RUNNINGVERSION.zip -d /qmf/qml
 	fi
 	#install boot script to download TSC helper script if necessary
-	echo "if [ ! -s /usr/bin/tsc ] || grep -q no-check-certificate /usr/bin/tsc ; then /usr/bin/curl -Nks --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/master/tsc -o /usr/bin/tsc ; chmod +x /usr/bin/tsc ; fi ; if ! grep -q tscs /etc/inittab ; then sed -i '/qtqt/a\ tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab ; if grep -q tscs /etc/inittab ; then init q ; fi ; fi" > /etc/rc5.d/S99tsc.sh
+	echo "if [ ! -s /usr/bin/tsc ] || grep -q no-check-certificate /usr/bin/tsc ; then /usr/bin/curl -Nks --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc ; chmod +x /usr/bin/tsc ; fi ; if ! grep -q tscs /etc/inittab ; then sed -i '/qtqt/a\ tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab ; if grep -q tscs /etc/inittab ; then init q ; fi ; fi" > /etc/rc5.d/S99tsc.sh
 	chmod +x /etc/rc5.d/S99tsc.sh
 	#fix TSC helper script download location (if necessary)
 	sed -i 's/IgorYbema/ToonSoftwareCollective/' /etc/rc5.d/S99tsc.sh
 	#download TSC helper script
 	if [ ! -s /usr/bin/tsc ] || grep -q no-check-certificate /usr/bin/tsc
 	then
-		/usr/bin/curl --compressed -Nks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/master/tsc -o /usr/bin/tsc
+		/usr/bin/curl --compressed -Nks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc
 		chmod +x /usr/bin/tsc
 	fi
 	#install tsc in inittab to run continously from boot

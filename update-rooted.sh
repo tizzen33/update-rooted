@@ -226,6 +226,23 @@ editAutoBrightness(){
 	fi
 }
 
+checkJSON() {
+	if ! grep -q application/json /qmf/etc/lighttpd/lighttpd.conf
+	then
+		echo "json entry not found"
+		# remove possible backup
+		rm /qmf/etc/lighttpd/lighttpd.conf.backup
+		# make backup
+		/bin/cp /qmf/etc/lighttpd/lighttpd.conf /qmf/etc/lighttpd/lighttpd.conf.backup
+		# comment line
+		sed -i 's~""~#""~g' /qmf/etc/lighttpd/lighttpd.conf
+		# add new line
+		sed -i '/#""/a\  ""              =>      "application/json",' /qmf/etc/lighttpd/lighttpd.conf
+		echo "lighttpd edited to view tsc/sensors via browser"
+	else
+		echo "json entry found, nothing changed"
+	fi
+}
 
 editActivation() {
 	#remove AWS IOT token file and restart bxtproxy
@@ -908,6 +925,8 @@ fixFiles() {
 		disableHapps
 		echo "EDITING: download certificate store pem file"
 		checkCApem
+		echo "EDITING: lighttpd so tsc/sensors is viewable via a browser"
+		checkJSON
 	else
 		#from version 4.16 we need to download resources.rcc mod
 		if [ $VERS_MAJOR -gt 4 ] || [ $VERS_MAJOR -eq 4 -a $VERS_MINOR -ge 16 ]

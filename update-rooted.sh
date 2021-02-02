@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.34  - TheHogNL & TerrorSource & yjb - 02-01-2021"
+echo "Version: 4.35  - TheHogNL & TerrorSource & yjb - 02-02-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -164,7 +164,7 @@ editTenantSettingsFile(){
 
 checkCApem() {
         UPDATECA=false
-        SHA256ONLINE=`curl -Nks https://curl.haxx.se/ca/cacert.pem.sha256 | cut -d\  -f1`
+        SHA256ONLINE=`curl -Nks https://curl.se/ca/cacert.pem.sha256 | cut -d\  -f1`
         SHA256CURRENT='false'
         if [ -f /usr/local/share/ca-certificates/mozilla.crt ]
         then
@@ -173,7 +173,7 @@ checkCApem() {
         if [ !  "$SHA256CURRENT" == "$SHA256ONLINE" ] && [ -n "$SHA256ONLINE" ]
         then
                 echo "There is a new version of the Mozilla CA pem file. Downloading it!"
-                /usr/bin/curl -Nks https://curl.haxx.se/ca/cacert.pem -o /tmp/mozilla.crt
+                /usr/bin/curl -Nks https://curl.se/ca/cacert.pem -o /tmp/mozilla.crt
                 SHA256NEW=`/usr/bin/sha256sum /tmp/mozilla.crt | cut -d\  -f1`
                 if [ "$SHA256ONLINE" == "$SHA256NEW" ]
                 then

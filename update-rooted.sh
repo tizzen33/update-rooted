@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.35  - TheHogNL & TerrorSource & yjb - 02-02-2021"
+echo "Version: 4.40  - TheHogNL & TerrorSource & yjb - 10-02-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -229,7 +229,6 @@ editAutoBrightness(){
 checkJSON() {
 	if ! grep -q application/json /qmf/etc/lighttpd/lighttpd.conf
 	then
-		echo "json entry not found"
 		# remove possible backup
 		rm /qmf/etc/lighttpd/lighttpd.conf.backup
 		# make backup
@@ -238,9 +237,6 @@ checkJSON() {
 		sed -i 's~""~#""~g' /qmf/etc/lighttpd/lighttpd.conf
 		# add new line
 		sed -i '/#""/a\  ""              =>      "application/json",' /qmf/etc/lighttpd/lighttpd.conf
-		echo "lighttpd edited to view tsc/sensors via browser"
-	else
-		echo "json entry found, nothing changed"
 	fi
 }
 
@@ -673,13 +669,6 @@ downloadUpgradeFile() {
 }
 
 startPrepare() {
-	#temporary fix, sonos app issue cauasing updates to fail
-	if opkg list-installed sonos | grep -q 1.0.4
-	then
-		echo "Sonos app 1.0.4 is being upgraded to 1.1.2 as it has issues causing problems with upgrading."
-		/usr/bin/opkg install http://files.domoticaforum.eu/uploads/Toon/apps/sonos-1.1.2/sonos_1.1.2-r0_qb2.ipk >/dev/null 2>&1	
-	fi
-
 	echo "Upgrade script downloaded. We need to download the upgrade files first. No upgrade is done yet. Do you want me to download the files (yes) or quit (anything else)?"
 	if ! $UNATTENDED ; then read QUESTION; fi	
 	if [ ! "$QUESTION" == "yes" ] 
@@ -836,8 +825,8 @@ exitFail() {
 }
 
 downloadResourceFile() {
-	RESOURCEFILEURL="http://qutility.nl/resourcefiles/resources-$ARCH-$RUNNINGVERSION.zip"
-	/usr/bin/wget  $RESOURCEFILEURL -O /tmp/resources-$ARCH-$RUNNINGVERSION.zip -T 5 -t 2 -o /dev/null
+	RESOURCEFILEURL="https://raw.githubusercontent.com/ToonSoftwareCollective/resourcefiles/master/resources-$ARCH-$RUNNINGVERSION.zip"
+	/usr/bin/curl  --compressed -Nks  --retry 5 --connect-timeout 2  $RESOURCEFILEURL -O /tmp/resources-$ARCH-$RUNNINGVERSION.zip
 	RESULT=$?
 
 	if [ ! $RESULT == 0 ]

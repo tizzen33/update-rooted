@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.41  - TheHogNL & TerrorSource & yjb - 11-02-2021"
+echo "Version: 4.42  - TheHogNL - 17-02-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -24,7 +24,6 @@ usage() {
 	Options:
 	-v <version> Upgrade to a specific version
 	-a Activation only
-	-b Installation of Busybox, OWN RISK !
 	-d Skip starting VPN
 	-s <url> provide custom repo url
 	-f Only fix files without a version update
@@ -310,51 +309,6 @@ installToonStoreApps() {
 	done
 }
 
-installDropbear(){
-	#install dropbear
-	DROPBEARURL=$SOURCEFILES/dropbear_2015.71-r0_qb2.ipk
-	opkg install $DROPBEARURL
-}
-
-installX11vnc(){
-	if [ $ARCH == "nxt" ]
-	then 
-		echo "Not installing vnc for NXT yet. Not available in this version."
-	else
-		#uninstall current x11vnc
-		opkg remove x11vnc
-		/bin/sleep 5
-
-		#install latest x11vnc
-		X11VNCURL=$SOURCEFILES/x11vnc_0.9.13-r3_qb2.ipk
-		opkg install $X11VNCURL
-	fi
-}
-
-installBusybox() {
-	VERS_MAJOR="`echo $RUNNINGVERSION | sed -n -r -e 's,([0-9]+).([0-9]+).([0-9]+),\1,p'`"
-	VERS_MINOR="`echo $RUNNINGVERSION | sed -n -r -e 's,([0-9]+).([0-9]+).([0-9]+),\2,p'`"
-	VERS_BUILD="`echo $RUNNINGVERSION | sed -n -r -e 's,([0-9]+).([0-9]+).([0-9]+),\3,p'`"
-
-	#from version 4.9 and later we need to install a custom busybox as the native removes getty 
-	if [ $VERS_MAJOR -gt 4 ] || [ $VERS_MAJOR -eq 4 -a $VERS_MINOR -ge 9 ]
-	then 
-		echo "Installing custom busybox to replace the native busybox from Eneco so we have a working getty."
-
-		BUSYBOXURL=$SOURCEFILES/apps/busybox-1.27.2-r4/busybox_1.27.2-r4_qb2.ipk
-		BUSYBOXMOUNTALLURL=$SOURCEFILES/apps/busybox-1.27.2-r4/busybox-mountall_1.27.2-r4_qb2.ipk
-		BUSYBOXSYSLOGURL=$SOURCEFILES/apps/busybox-1.27.2-r4/busybox-syslog_1.27.2-r4_qb2.ipk
-
-		opkg install $BUSYBOXURL
-		opkg install $BUSYBOXMOUNTALLURL
-		opkg install $BUSYBOXSYSLOGURL
-	else
-		echo "Custom busybox install not necessary for this firmware."
-	fi
-
-	echo "EDITING: Adding serial connection"
-	editSerialConnection
-}
 
 getVersion() {
 	VERSIONS=`/usr/bin/curl -Nks --compressed "https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/main/toonversions" | /usr/bin/tr '\n\r' ' ' | /bin/grep STARTTOONVERSIONS | /bin/sed 's/.*#STARTTOONVERSIONS//' | /bin/sed 's/#ENDTOONVERSIONS.*//' | xargs`
@@ -890,8 +844,6 @@ fixFiles() {
 			installToonStoreApps
 		fi
 		#dropbear is not needed, no rooted toon2 without working dropbear exists
-		#echo "FIXING: Installing Dropbear for ssh access"
-		#installDropbear
 		echo "EDITING: Time server, removes unnecessary link to Quby"
 		editTimeServer
 		echo "EDITING: Hosts file, removes unnecessary link to Quby"
@@ -996,7 +948,6 @@ STEP=0
 VERSION=""
 SOURCE="http://feed.hae.int/feeds"
 ORIGINALSOURCE=true	
-SOURCEFILES="http://files.domoticaforum.eu/uploads/Toon"
 ENABLEVPN=true
 PROGARGS="$@"
 
@@ -1017,11 +968,6 @@ do
 		a)
 			echo "Auto activation"
 			editActivation
-			exit
-			;;
-		b)
-			echo "Busybox installation"
-			installBusybox
 			exit
 			;;
 		u)
@@ -1185,17 +1131,6 @@ then
 		checkOVPN
 	fi
 	echo "$STEP;$VERSION;$FLAV;$ARCH" > $STATUSFILE
-fi
-if [ $STEP -lt 8 ]
-then
-	STEP=8;
-	#skipping x11vnc install as this is an update-script and not an install-script
-	#echo "Do you want to install x11vnc? cmd 'x11vnc' needs to be run after each reboot to start the x11vnc server. x11vnc password can be set while starting x11vnc for the first time"
-	#if ! $UNATTENDED ; then read QUESTION ; fi
-	#if [ "$QUESTION" == "yes" ] &&  ! $UNATTENDED #not install x11vnc in unattended mode
-	#then
-	#	installX11vnc
-	#fi
 fi
 
 # sync the filesystem

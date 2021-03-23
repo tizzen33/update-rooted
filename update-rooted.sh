@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.43  - TheHogNL - 22-03-2021"
+echo "Version: 4.44  - TheHogNL - 23-03-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -872,6 +872,12 @@ fixFiles() {
 		#from version 4.16 we need to download resources.rcc mod
 		if [ $VERS_MAJOR -gt 4 ] || [ $VERS_MAJOR -eq 4 -a $VERS_MINOR -ge 16 ]
 		then 
+			if grep -q 'SCRIPTVERSION=\"2.52\"' /usr/bin/tsc
+			then
+				echo "FIXING: updating TSC script version 2.52 first as this has a bug which blocks updating a missing resource file"
+				/usr/bin/curl -Nks --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc
+				killall -9 tsc
+			fi
 			echo "FIXING: Downloading resources.rcc TSC mod for this version $RUNNINGVERSION."
 			downloadResourceFile
 		else 

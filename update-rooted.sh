@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.44  - TheHogNL - 23-03-2021"
+echo "Version: 4.45  - TheHogNL - 23-03-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -778,7 +778,29 @@ exitFail() {
 	exit
 }
 
+installTSCscript() {
+	#install boot script to download TSC helper script if necessary
+	echo "if [ ! -s /usr/bin/tsc ] || grep -q no-check-certificate /usr/bin/tsc ; then /usr/bin/curl -Nks --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc ; chmod +x /usr/bin/tsc ; fi ; if ! grep -q tscs /etc/inittab ; then sed -i '/qtqt/a\ tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab ; if grep -q tscs /etc/inittab ; then init q ; fi ; fi" > /etc/rc5.d/S99tsc.sh
+	chmod +x /etc/rc5.d/S99tsc.sh
+	#fix TSC helper script download location (if necessary)
+	sed -i 's/IgorYbema/ToonSoftwareCollective/' /etc/rc5.d/S99tsc.sh
+
+	#download or update TSC helper script
+	/usr/bin/curl --compressed -Nks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc
+	chmod +x /usr/bin/tsc
+
+	#install tsc in inittab to run continously from boot
+	if ! grep -q tscs /etc/inittab
+	then
+		sed -i '/qtqt/a\tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab
+		init q
+	fi
+}
+
 downloadResourceFile() {
+	#first install TSC script to make sure it does not conflict with update script
+	installTSCscript
+
 	RESOURCEFILEURL="https://raw.githubusercontent.com/ToonSoftwareCollective/resourcefiles/main/resources-$ARCH-$RUNNINGVERSION.zip"
 	/usr/bin/curl  --compressed -Nks  --retry 5 --connect-timeout 2  $RESOURCEFILEURL -o /tmp/resources-$ARCH-$RUNNINGVERSION.zip
 	RESULT=$?
@@ -790,23 +812,6 @@ downloadResourceFile() {
 		mv /qmf/qml/resources-static-base.rcc /qmf/qml/resources-static-base.rcc.backup
 		mv /qmf/qml/resources-static-ebl.rcc /qmf/qml/resources-static-ebl.rcc.backup
 		/usr/bin/unzip -oq /tmp/resources-$ARCH-$RUNNINGVERSION.zip -d /qmf/qml
-	fi
-	#install boot script to download TSC helper script if necessary
-	echo "if [ ! -s /usr/bin/tsc ] || grep -q no-check-certificate /usr/bin/tsc ; then /usr/bin/curl -Nks --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc ; chmod +x /usr/bin/tsc ; fi ; if ! grep -q tscs /etc/inittab ; then sed -i '/qtqt/a\ tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab ; if grep -q tscs /etc/inittab ; then init q ; fi ; fi" > /etc/rc5.d/S99tsc.sh
-	chmod +x /etc/rc5.d/S99tsc.sh
-	#fix TSC helper script download location (if necessary)
-	sed -i 's/IgorYbema/ToonSoftwareCollective/' /etc/rc5.d/S99tsc.sh
-	#download TSC helper script
-	if [ ! -s /usr/bin/tsc ] || grep -q no-check-certificate /usr/bin/tsc
-	then
-		/usr/bin/curl --compressed -Nks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc
-		chmod +x /usr/bin/tsc
-	fi
-	#install tsc in inittab to run continously from boot
-	if ! grep -q tscs /etc/inittab
-	then
-		sed -i '/qtqt/a\tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab
-		init q
 	fi
 }
 
@@ -872,12 +877,6 @@ fixFiles() {
 		#from version 4.16 we need to download resources.rcc mod
 		if [ $VERS_MAJOR -gt 4 ] || [ $VERS_MAJOR -eq 4 -a $VERS_MINOR -ge 16 ]
 		then 
-			if grep -q 'SCRIPTVERSION=\"2.52\"' /usr/bin/tsc
-			then
-				echo "FIXING: updating TSC script version 2.52 first as this has a bug which blocks updating a missing resource file"
-				/usr/bin/curl -Nks --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc
-				killall -9 tsc
-			fi
 			echo "FIXING: Downloading resources.rcc TSC mod for this version $RUNNINGVERSION."
 			downloadResourceFile
 		else 

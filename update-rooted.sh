@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.46  - TheHogNL - 23-03-2021"
+echo "Version: 4.47  - TheHogNL - 22-04-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -229,7 +229,7 @@ checkJSON() {
 	if ! grep -q application/json /qmf/etc/lighttpd/lighttpd.conf
 	then
 		# remove possible backup
-		rm /qmf/etc/lighttpd/lighttpd.conf.backup
+		rm -f /qmf/etc/lighttpd/lighttpd.conf.backup
 		# make backup
 		/bin/cp /qmf/etc/lighttpd/lighttpd.conf /qmf/etc/lighttpd/lighttpd.conf.backup
 		# comment line

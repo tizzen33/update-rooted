@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.47  - TheHogNL - 22-04-2021"
+echo "Version: 4.48  - TheHogNL - 28-05-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -226,16 +226,22 @@ editAutoBrightness(){
 }
 
 checkJSON() {
-	if ! grep -q application/json /qmf/etc/lighttpd/lighttpd.conf
+	if ! grep -q sensors /qmf/etc/lighttpd/lighttpd.conf
 	then
 		# remove possible backup
 		rm -f /qmf/etc/lighttpd/lighttpd.conf.backup
 		# make backup
 		/bin/cp /qmf/etc/lighttpd/lighttpd.conf /qmf/etc/lighttpd/lighttpd.conf.backup
-		# comment line
-		sed -i 's~""~#""~g' /qmf/etc/lighttpd/lighttpd.conf
+
+		if grep -q application/json /qmf/etc/lighttpd/lighttpd.conf  #first repair old patch
+		then
+			sed -i 's~#""~""~g' /qmf/etc/lighttpd/lighttpd.conf
+			sed -i '/application\/json/d' /qmf/etc/lighttpd/lighttpd.conf
+		fi
+
 		# add new line
-		sed -i '/#""/a\  ""              =>      "application/json",' /qmf/etc/lighttpd/lighttpd.conf
+		sed -i '/".tar.bz2"/a\  ".json"              =>      "application/json",' /qmf/etc/lighttpd/lighttpd.conf
+		sed -i '/".tar.bz2"/a\  "sensors"            =>      "application/json",' /qmf/etc/lighttpd/lighttpd.conf
 	fi
 }
 

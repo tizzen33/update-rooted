@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.48  - TheHogNL - 28-05-2021"
+echo "Version: 4.49  - TheHogNL - 16-08-2021"
 echo ""
 echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
 echo "https://paypal.me/pools/c/8bU3eQp1Jt"
@@ -793,21 +793,28 @@ installTSCscript() {
 
 	#download or update TSC helper script
 	/usr/bin/curl --compressed -Nks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc.new
-	#check for valid download
-	CURRENTTIME=`date +%s`
-	MD5TSCONLINE=`curl -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc.md5?$CURRENTTIME | cut -d\  -f1`
-	MD5TSCNOW=`/usr/bin/md5sum /usr/bin/tsc.new | cut -d\  -f1`
-	if [ "$MD5TSCNOW" == "$MD5TSCONLINE" ] && [ -n "$MD5TSCONLINE" ]
-	then
-		mv /usr/bin/tsc.new /usr/bin/tsc
-		chmod +x /usr/bin/tsc
-	fi
+	RESULT=$?
 
-	#install tsc in inittab to run continously from boot
-	if ! grep -q tscs /etc/inittab
+	if [ ! $RESULT == 0 ]
 	then
-		sed -i '/qtqt/a\tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab
-		init q
+		echo "[ERROR] Could not download TSC script from github!" 
+	else
+		#check for valid download
+		CURRENTTIME=`date +%s`
+		MD5TSCONLINE=`curl -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc.md5?$CURRENTTIME | cut -d\  -f1`
+		MD5TSCNOW=`/usr/bin/md5sum /usr/bin/tsc.new | cut -d\  -f1`
+		if [ "$MD5TSCNOW" == "$MD5TSCONLINE" ] && [ -n "$MD5TSCONLINE" ]
+		then
+			mv /usr/bin/tsc.new /usr/bin/tsc
+			chmod +x /usr/bin/tsc
+		fi
+	
+		#install tsc in inittab to run continously from boot
+		if ! grep -q tscs /etc/inittab
+		then
+			sed -i '/qtqt/a\tscs:245:respawn:/usr/bin/tsc >/var/log/tsc 2>&1' /etc/inittab
+			init q
+		fi
 	fi
 }
 
@@ -821,7 +828,7 @@ downloadResourceFile() {
 
 	if [ ! $RESULT == 0 ]
 	then 
-		echo "Could not download a resources.rcc file for this version! Continuing, but your custom apps probably dont work anymore" 
+		echo "[ERROR] Could not download a resources.rcc file for this version! Continuing, but your custom apps probably dont work anymore" 
 	else 
 		mv /qmf/qml/resources-static-base.rcc /qmf/qml/resources-static-base.rcc.backup
 		mv /qmf/qml/resources-static-ebl.rcc /qmf/qml/resources-static-ebl.rcc.backup

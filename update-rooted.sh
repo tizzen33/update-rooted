@@ -4,10 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.49  - TheHogNL - 16-08-2021"
-echo ""
-echo "If you like the update script for rooted toons you can support me. Any donation is welcome and helps me developing the script even more."
-echo "https://paypal.me/pools/c/8bU3eQp1Jt"
+echo "Version: 4.50  - TheHogNL - 22-09-2021"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -792,7 +789,7 @@ installTSCscript() {
 	sed -i 's/IgorYbema/ToonSoftwareCollective/' /etc/rc5.d/S99tsc.sh
 
 	#download or update TSC helper script
-	/usr/bin/curl --compressed -Nks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc.new
+	/usr/bin/curl --compressed -fNks  --retry 5 --connect-timeout 2 https://raw.githubusercontent.com/ToonSoftwareCollective/tscSettings/main/tsc -o /usr/bin/tsc.new
 	RESULT=$?
 
 	if [ ! $RESULT == 0 ]
@@ -823,7 +820,7 @@ downloadResourceFile() {
 	installTSCscript
 
 	RESOURCEFILEURL="https://raw.githubusercontent.com/ToonSoftwareCollective/resourcefiles/main/resources-$ARCH-$RUNNINGVERSION.zip"
-	/usr/bin/curl  --compressed -Nks  --retry 5 --connect-timeout 2  $RESOURCEFILEURL -o /tmp/resources-$ARCH-$RUNNINGVERSION.zip
+	/usr/bin/curl  --compressed -fNks  --retry 5 --connect-timeout 2  $RESOURCEFILEURL -o /tmp/resources-$ARCH-$RUNNINGVERSION.zip
 	RESULT=$?
 
 	if [ ! $RESULT == 0 ]

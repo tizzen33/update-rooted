@@ -116,6 +116,7 @@ editHostfile(){
 	#remove current comment lines + resolve ping.quby.nl to localhost
 	sed -i '/ping.quby.nl/d' /etc/hosts
 	echo '127.0.0.1    ping.quby.nl' >> /etc/hosts
+	echo '127.0.0.1    api.quby.io' >> /etc/hosts
 }
 
 disableGoogleDNS() {

@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.51  - TheHogNL - 09-10-2021"
+echo "Version: 4.52  - TheHogNL - 09-11-2021"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -131,9 +131,16 @@ disableGoogleDNS() {
 
 editQMFConfigFile(){
 	#removing data gathering by quby
-	sed -i '/test.datalab.toon.eu/d' /HCBv2/etc/qmf_tenant.xml
-	sed -i '/eneco.bd.toon.eu/d' /HCBv2/etc/qmf_tenant.xml
-	sed -i '/quby.count.ly/d' /HCBv2/etc/qmf_tenant.xml
+	if [ -L /HCBv2/etc/qmf_tenant.xml ] 
+	then
+		sed -i '/datalab.toon.eu/d' /qmf/var/tenantdir/qmf_tenant.xml
+		sed -i '/bd.toon.eu/d' /qmf/var/tenantdir/qmf_tenant.xml
+		sed -i '/quby.count.ly/d' /qmf/var/tenantdir/qmf_tenant.xml
+	else
+		sed -i '/datalab.toon.eu/d' /HCBv2/etc/qmf_tenant.xml
+		sed -i '/bd.toon.eu/d' /HCBv2/etc/qmf_tenant.xml
+		sed -i '/quby.count.ly/d' /HCBv2/etc/qmf_tenant.xml
+	fi
 	#whitelisting web service
 	sed -i 's/<enforceWhitelist>1/<enforceWhitelist>0/' /HCBv2/etc/qmf_release.xml
 }
@@ -141,21 +148,28 @@ editQMFConfigFile(){
 editTenantSettingsFile(){
 	#disabling subscription features
 	cp -L /HCBv2/qml/config/TenantSettings.json /HCBv2/qml/config/TenantSettings.json.save
-	sed -i 's/"appBenchmarkEnabled" *: true/"appBenchmarkEnabled": false/' /HCBv2/qml/config/TenantSettings.json 
-	sed -i 's/"appCustomerServiceEnabled" *: true/"appCustomerServiceEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appBoilerMonitorEnabled" *: true/"appBoilerMonitorEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appWhatIsNewEnabled" *: true/"appWhatIsNewEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appWhatIsToonEnabled" *: true/"appWhatIsToonEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appStatusUsageEnabled" *: true/"appStatusUsageEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appUpsellEnabled" *: true/"appUpsellEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appHeatingOverviewEnabled" *: true/"appHeatingOverviewEnabled": false/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appWeather" *: "weather"/"appWeather": ""/' /HCBv2/qml/config/TenantSettings.json	
-	sed -i 's/"appWeather" *: "weatherInt"/"appWeather": ""/' /HCBv2/qml/config/TenantSettings.json	
+	TENANTFILE="/HCBv2/qml/config/TenantSettings.json"
+	if [ -L /HCBv2/qml/config/TenantSettings.json ] 
+	then
+		TENANTFILE="/qmf/var/tenantdir/TenantSettings.json"
+	fi
+	sed -i 's/"appBenchmarkEnabled" *: true/"appBenchmarkEnabled": false/' $TENANTFILE 
+	sed -i 's/"appCustomerServiceEnabled" *: true/"appCustomerServiceEnabled": false/' $TENANTFILE  
+	sed -i 's/"appBoilerMonitorEnabled" *: true/"appBoilerMonitorEnabled": false/' $TENANTFILE 
+	sed -i 's/"appWhatIsNewEnabled" *: true/"appWhatIsNewEnabled": false/' $TENANTFILE 
+	sed -i 's/"appWhatIsToonEnabled" *: true/"appWhatIsToonEnabled": false/' $TENANTFILE
+	sed -i 's/"appStatusUsageEnabled" *: true/"appStatusUsageEnabled": false/' $TENANTFILE
+	sed -i 's/"appUpsellEnabled" *: true/"appUpsellEnabled": false/' $TENANTFILE
+	sed -i 's/"appHeatingOverviewEnabled" *: true/"appHeatingOverviewEnabled": false/' $TENANTFILE
+	sed -i 's/"appWeather" *: "weather"/"appWeather": ""/' $TENANTFILE
+	sed -i 's/"appWeather" *: "weatherInt"/"appWeather": ""/' $TENANTFILE
 	#add english translations if nl_NL is only language (like in eneco toon tenant)
-	sed -i 's/"nl_NL"$/"nl_NL","en_GB"/' /HCBv2/qml/config/TenantSettings.json
+	sed -i 's/"nl_NL"$/"nl_NL","en_GB"/' $TENANTFILE
 	#remove feature boilermonitoring and wastechekers as these are only for subscription users and it slows down booting if not disabled
-	sed -i 's/<feature>boilerMonitoring<\/feature>//' /qmf/config/config_happ_scsync.xml
-	sed -i 's/<feature>wasteChecker<\/feature>//' /qmf/config/config_happ_scsync.xml
+	sed -i 's/<feature>boilerMonitoring<\/feature>//' $TENANTFILE
+	sed -i 's/<feature>wasteChecker<\/feature>//' $TENANTFILE
+	#remove weather tenant setting also, without removing this the toon boots slowly
+	sed -i 's/"appWeather" *: "weather"/"appWeather": ""/' $TENANTFILE 
 }
 
 checkCApem() {
@@ -199,8 +213,6 @@ disableHapps() {
 	rm -f /HCBv2/etc/start.d/hcb_log
 	sed -i '/happ_kpi/d' /HCBv2/etc/qmf_hardware.xml
 	sed -i '/happ_weather/d' /HCBv2/etc/qmf_hardware.xml
-	#remove weather tenant setting also, without removing this the toon boots slowly
-	sed -i 's/"appWeather" *: "weather"/"appWeather": ""/' /HCBv2/qml/config/TenantSettings.json	
 
 }
 

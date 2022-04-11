@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.52  - TheHogNL - 09-11-2021"
+echo "Version: 4.60  - TheHogNL - 11-04-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -570,7 +570,8 @@ enableVPN() {
 	FEEDROUTE=`ip route | /bin/grep ^172.*via.*tap0 | /usr/bin/awk '{print $1}'| /usr/bin/awk 'BEGIN {FS="."}; {print $1"."$2"."$3}'`
 	COUNT=0
 	while [ "$FEEDROUTE" == "" ] ; do
-		if [ $COUNT -gt 5 ] 
+		killall -9 openvpn 2>/dev/null
+		if [ $COUNT -gt 10 ] 
 		then
 			echo "Could not enable VPN in a normal reasonable time!"
 			echo "DEBUG information:"
@@ -582,7 +583,7 @@ enableVPN() {
 		COUNT=$((COUNT+1))
 		/bin/echo "Now starting the VPN tunnel and waiting for it to be alive and configured..."
 		/usr/sbin/openvpn --config /etc/openvpn/vpn.conf --verb 0 >/dev/null --daemon 
-		/bin/sleep 5
+		/bin/sleep 10
 		FEEDROUTE=`ip route | /bin/grep ^172.*via.*tap0 | /usr/bin/awk '{print $1}'| /usr/bin/awk 'BEGIN {FS="."}; {print $1"."$2"."$3}'`
 	done
 	/bin/echo "Tunnel is alive and configured."

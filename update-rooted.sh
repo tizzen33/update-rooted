@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.60  - TheHogNL - 11-04-2022"
+echo "Version: 4.61  - TheHogNL - 12-04-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -116,7 +116,8 @@ editHostfile(){
 	#remove current comment lines + resolve ping.quby.nl to localhost
 	sed -i '/ping.quby.nl/d' /etc/hosts
 	echo '127.0.0.1    ping.quby.nl' >> /etc/hosts
-	echo '127.0.0.1    api.quby.io' >> /etc/hosts
+	#echo '127.0.0.1    api.quby.io' >> /etc/hosts
+	sed -i '/api.quby.io/d' /etc/hosts
 }
 
 disableGoogleDNS() {

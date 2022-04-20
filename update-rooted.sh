@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.61  - TheHogNL - 12-04-2022"
+echo "Version: 4.7  - TheHogNL - 20-04-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -26,6 +26,7 @@ usage() {
 	-f Only fix files without a version update
 	-u unattended mode (always answer with yes) 
 	-o only startup vpn and then quit (allows manual package downloads using opkg) 
+	-c request new VPN certificates
 	-h Display this help text
 	"
 }
@@ -973,11 +974,115 @@ setOpkgFeedFiles() {
 		EF_PATH="`echo "$EF" | cut -d ' ' -f2`"
 		echo "src/gz ${EF_NAME} ${BASE_FEED_URL}/${ARCH}/${EF_PATH}" > /etc/opkg/${EF_NAME}-feed.conf
 	done;
+	}
+
+	echo ">> configured opkg feeds:"
+	cat /etc/opkg/*-feed.conf
 }
 
-echo ">> configured opkg feeds:"
-cat /etc/opkg/*-feed.conf
+checkVPNcertificates() {
+	NEEDVPNUPDATE=false
+	if grep -q nxt /etc/opkg/arch.conf
+	then
+		if openssl x509 -in /etc/openvpn/certs/device.crt -noout -issuer | grep -q "Prodrive"
+                then
+			NEEDVPNUPDATE=true
+                fi
+	else
+                if openssl x509 -in /etc/openvpn/vpn/$HOSTNAME.crt -noout -issuer | grep -q "Home Automation"
+                then
+			NEEDVPNUPDATE=true
+                fi
+	fi
+
+        if [ "$NEEDVPNUPDATE" = true ]
+	then
+		echo "This toon contains old VPN certificates. Need to request new certificates!"
+                requestVPNCertificates
+	else
+		echo "This toon does not contain old VPN certficates. Not necessary to update VPN certificates."
+	fi
+
 }
+
+requestVPNCertificates() {
+	#for a toon2 only replace the ta-ene.key and let the software update to 5.49.16 to request the certificates
+	if grep -q nxt /etc/opkg/arch.conf
+	then
+       		TASYMLINK=`readlink -f /etc/openvpn/certs/ta-ene.key`
+        	if [ ! "$TASYMLIK" == "/mnt/persist/etc/openvpn/certs/ta.key" ]
+        	then
+                	echo "Updating ta-ene.key symlink on this Toon2. This will be enough to be able to use VPN again. Please update the firmware asap to update the VPN certificates!"
+                	cd /etc/openvpn/certs/
+                	rm ta-ene.key
+                	ln -s /mnt/persist/etc/openvpn/certs/ta.key ta-ene.key
+        	else
+                	echo "The ta-ene.key symlink is already correct on this toon 2. Please just update to the most recent firmware to update the VPN certificates!"
+        	fi
+	else
+		#for the toon1 we need to request the certs ourselves
+        	echo "We are on a Toon 1 so we need to request new certificates before being able to create a VPN connection..."
+        	mkdir -p /root/newvpn
+
+        	#Generate a new key
+        	openssl genpkey  -outform PEM  -out /root/newvpn/device.key  -algorithm RSA  -pkeyopt rsa_keygen_bits:2048
+
+        	#create the file /root/newvpn/openssl-client.cnf with the following text context (between the EOT's)
+        	cat <<'EOT' > /root/newvpn/openssl-client.cnf
+[ req ]
+distinguished_name=dn
+[ dn ]
+# Empty
+EOT
+        	#get real hostname (don't believe $HOSTNAME is always correct on rooted toons)
+        	REALHOSTNAME=`find /etc/openvpn/vpn -maxdepth 1 -name "eneco*.crt" | cut -d\/ -f5 | cut -d\. -f1`
+
+        	#generate a certificate signing request, make sure toon hostname is set to original hostname and not your own
+        	openssl req  -config /root/newvpn/openssl-client.cnf  -outform PEM  -out /root/newvpn/device.csr  -subj "/O=Quby B.V./CN=$REALHOSTNAME"  -key /root/newvpn/device.key -new
+
+        	#put old certificate and CSR into a JSON blob
+        	OLDCERT=$(cat /etc/openvpn/vpn/$REALHOSTNAME.crt | sed 's/$/\\n'/ | tr -d '\n')
+
+        	#and then add CSR and create JSON blob
+        	CSR=$(cat /root/newvpn/device.csr  | sed 's/$/\\n'/ | tr -d '\n')
+        	JSON="{\"deviceCrt\": \"$OLDCERT\",\"deviceCsr\": \"$CSR\"}"
+
+        	#send this to the certificate signing server
+        	echo "New VPN certificate request created and now sending the request to Eneco..."
+        	IFS="" ; curl -fNks 'https://api.quby.io/account/signcertificate' --location --request POST --write-out %{http_code} --header 'Content-Type: application/json' --data-raw $JSON -o /root/newvpn/new.json
+
+        	#seperate the content of the result JSON to create new certificate files
+        	cat /root/newvpn/new.json | sed 's/.*\"cert\":\"\(.*\)\",\"tlsKey.*/\1/' | sed 's/\\n/\n/g' > /root/newvpn/device.crt
+        	cat /root/newvpn/new.json | sed 's/.*\"tlsKey\":\"\(.*\)\",\"ca.*/\1/' | sed 's/\\n/\n/g'  > /root/newvpn/ta.key
+        	cat /root/newvpn/new.json | sed 's/.*\"ca\":\"\(.*\)\"}].*/\1/' | sed 's/\\n/\n/g' > /root/newvpn/server-ca-bundle
+
+        	#then check certificate for validity
+        	MD5CRT=`openssl x509 -noout -modulus -in /root/newvpn/device.crt | openssl md5`
+        	MD5KEY=`openssl rsa -noout -modulus -in /root/newvpn/device.key | openssl md5`
+        	if [ "$MD5CRT" == "$MD5KEY" ]
+        	then
+                	#replace existings certs finally
+                	echo "Request successful and updating the VPN certificates now..."
+                	cd /etc/openvpn/vpn
+                	mv ca.crt ca.crt.bak
+                	mv $REALHOSTNAME.crt $REALHOSTNAME.crt.bak
+                	mv $REALHOSTNAME.key $REALHOSTNAME.key.bak
+                	mv ta.key ta.key.bak
+                	mv /root/newvpn/device.crt $REALHOSTNAME.crt
+                	mv /root/newvpn/device.key $REALHOSTNAME.key
+                	mv /root/newvpn/server-ca-bundle ca.crt
+                	mv /root/newvpn/ta.key ta.key
+			#remove old options in vpn.conf
+			sed -i '/dh1024/d' /etc/openvpn/vpn.conf
+			sed -i '/VPN-Eneco/d' /etc/openvpn/vpn.conf
+			sync ; sync
+        	else
+                	echo "Failed to request and update the VPN certificates!"
+			exit
+        	fi
+	fi
+}
+
 
 #main
 
@@ -992,7 +1097,7 @@ PROGARGS="$@"
 
 
 #get options
-while getopts ":v:s:abfduho" opt $PROGARGS
+while getopts ":v:s:abcfduho" opt $PROGARGS
 do
 	case $opt in
 		v)
@@ -1022,6 +1127,11 @@ do
 		d)
 			echo "Skip starting VPN"
 			ENABLEVPN=false
+			;;
+		c)
+			echo "Requesting new VPN certificates"
+			checkVPNcertificates
+			exit
 			;;
 		f)
 			echo "Only fixing files."
@@ -1110,6 +1220,9 @@ fi
 #before opening the connection to Eneco's network we prepare the firewall to only allow access from/to the download server
 if $ENABLEVPN
 then
+	#check if VPN certificates needs updating
+	checkVPNcertificates
+	#put some firewall rules inplace before starting VPN to block service center traffic
 	initializeFirewall
 	#now we are ready to try to start the VPN
 	enableVPN

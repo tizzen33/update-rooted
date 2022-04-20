@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.71  - TheHogNL - 20-04-2022"
+echo "Version: 4.72  - TheHogNL - 20-04-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -1053,9 +1053,15 @@ EOT
         	IFS="" ; curl -fNks 'https://api.quby.io/account/signcertificate' --location --request POST --write-out %{http_code} --header 'Content-Type: application/json' --data-raw $JSON -o /root/newvpn/new.json
 
         	#seperate the content of the result JSON to create new certificate files
-        	cat /root/newvpn/new.json | sed 's/.*\"cert\":\"\(.*\)\",\"tlsKey.*/\1/' | sed 's/\\n/\n/g' > /root/newvpn/device.crt
-        	cat /root/newvpn/new.json | sed 's/.*\"tlsKey\":\"\(.*\)\",\"ca.*/\1/' | sed 's/\\n/\n/g'  > /root/newvpn/ta.key
-        	cat /root/newvpn/new.json | sed 's/.*\"ca\":\"\(.*\)\"}].*/\1/' | sed 's/\\n/\n/g' > /root/newvpn/server-ca-bundle
+		if [ -f /root/newvpn/new.json ]
+		then
+        		cat /root/newvpn/new.json | sed 's/.*\"cert\":\"\(.*\)\",\"tlsKey.*/\1/' | sed 's/\\n/\n/g' > /root/newvpn/device.crt
+        		cat /root/newvpn/new.json | sed 's/.*\"tlsKey\":\"\(.*\)\",\"ca.*/\1/' | sed 's/\\n/\n/g'  > /root/newvpn/ta.key
+        		cat /root/newvpn/new.json | sed 's/.*\"ca\":\"\(.*\)\"}].*/\1/' | sed 's/\\n/\n/g' > /root/newvpn/server-ca-bundle
+		else
+                	echo "Failed to request and update the VPN certificates!"
+			exit
+		fi
 
         	#then check certificate for validity
         	MD5CRT=`openssl x509 -noout -modulus -in /root/newvpn/device.crt | openssl md5`

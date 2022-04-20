@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.7  - TheHogNL - 20-04-2022"
+echo "Version: 4.71  - TheHogNL - 20-04-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -1049,6 +1049,7 @@ EOT
 
         	#send this to the certificate signing server
         	echo "New VPN certificate request created and now sending the request to Eneco..."
+		sed -i '/api.quby.io/d' /etc/hosts
         	IFS="" ; curl -fNks 'https://api.quby.io/account/signcertificate' --location --request POST --write-out %{http_code} --header 'Content-Type: application/json' --data-raw $JSON -o /root/newvpn/new.json
 
         	#seperate the content of the result JSON to create new certificate files

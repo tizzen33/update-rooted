@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.72  - TheHogNL - 20-04-2022"
+echo "Version: 4.73  - TheHogNL - 20-04-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -989,7 +989,9 @@ checkVPNcertificates() {
 			NEEDVPNUPDATE=true
                 fi
 	else
-                if openssl x509 -in /etc/openvpn/vpn/$HOSTNAME.crt -noout -issuer | grep -q "Home Automation"
+        	#get real hostname (don't believe $HOSTNAME is always correct on rooted toons)
+        	REALHOSTNAME=`find /etc/openvpn/vpn -maxdepth 1 -name "eneco*.crt" | cut -d\/ -f5 | cut -d\. -f1`
+                if openssl x509 -in /etc/openvpn/vpn/$REALHOSTNAME.crt -noout -issuer | grep -q "Home Automation"
                 then
 			NEEDVPNUPDATE=true
                 fi

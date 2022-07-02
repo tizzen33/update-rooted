@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.74  - TheHogNL - 25-04-2022"
+echo "Version: 4.75  - TheHogNL - 02-07-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -1082,8 +1082,10 @@ EOT
                 	mv /root/newvpn/server-ca-bundle ca.crt
                 	mv /root/newvpn/ta.key ta.key
 			#remove old options in vpn.conf
-			sed -i '/dh1024/d' /etc/openvpn/vpn.conf
-			sed -i '/VPN-Eneco/d' /etc/openvpn/vpn.conf
+			cp /etc/openvpn/vpn.conf /tmp/vpn.conf
+			sed -i '/dh1024/d' /tmp/vpn.conf
+			sed -i '/VPN-Eneco/d' /tmp/vpn.conf
+			cp /tmp/vpn.conf /etc/openvpn/vpn.conf
 			sync ; sync
         	else
                 	echo "Failed to request and update the VPN certificates!"

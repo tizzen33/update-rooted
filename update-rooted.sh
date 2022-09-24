@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.75  - TheHogNL - 02-07-2022"
+echo "Version: 4.76  - TheHogNL - 24-09-2022"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -105,8 +105,10 @@ editTimeServer() {
 	#edit time server
 	sed -i '/#server time.quby.nl minpoll 8/d' /etc/chrony.conf
 	sed -i 's~server time.quby.nl minpoll 8~#server time.quby.nl minpoll 8\nserver 0.nl.pool.ntp.org minpoll 8\nserver 1.nl.pool.ntp.org minpoll 8\nserver 2.nl.pool.ntp.org minpoll 8\nserver 3.nl.pool.ntp.org minpoll 8~g' /etc/chrony.conf
+	sed -i 's~server time-iot.hub.quby.com minpoll 8~#server time.quby.nl minpoll 8\nserver 0.nl.pool.ntp.org minpoll 8\nserver 1.nl.pool.ntp.org minpoll 8\nserver 2.nl.pool.ntp.org minpoll 8\nserver 3.nl.pool.ntp.org minpoll 8~g' /etc/chrony.conf
 	sed -i '/#initstepslew .* time.quby.nl/d' /etc/chrony.conf
 	sed -i 's~initstepslew .* time.quby.nl~#initstepslew 30 time.quby.nl\ninitstepslew 30 0.nl.pool.ntp.org\ninitstepslew 30 1.nl.pool.ntp.org\ninitstepslew 30 2.nl.pool.ntp.org\ninitstepslew 30 3.nl.pool.ntp.org~g' /etc/chrony.conf
+	sed -i 's~initstepslew .* time-iot.hub.quby.com~#initstepslew 30 time.quby.nl\ninitstepslew 30 0.nl.pool.ntp.org\ninitstepslew 30 1.nl.pool.ntp.org\ninitstepslew 30 2.nl.pool.ntp.org\ninitstepslew 30 3.nl.pool.ntp.org~g' /etc/chrony.conf
 	#removing stupid local binding of chrony
 	sed -i '/bindaddress/d' /etc/chrony.conf
 	sed -i '/bindcmdaddress/d' /etc/chrony.conf

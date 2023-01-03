@@ -4,7 +4,7 @@ echo "==========================================================================
 echo "Welcome to the rooted Toon upgrade script. This script will try to upgrade your Toon using your original connection with Eneco. It will start the VPN if necessary."
 echo "Please be advised that running this script is at your own risk!"
 echo ""
-echo "Version: 4.76  - TheHogNL - 24-09-2022"
+echo "Version: 4.80  - TheHogNL - 03-01-2023"
 echo ""
 echo "==================================================================================================================================================================="
 echo ""
@@ -983,6 +983,48 @@ setOpkgFeedFiles() {
 }
 
 checkVPNcertificates() {
+	#first check for empty vpn.conf on a qb2
+	if grep -q qb2 /etc/opkg/arch.conf
+	then
+		echo "Check vpn.conf"
+       		cp /etc/openvpn/vpn.conf /tmp/vpn.conf
+		if grep -q tap0 /tmp/vpn.conf 
+			then
+				echo "The vpn.conf seems ok, continuing..."
+			else
+				echo "vpn.conf is empty, restoring it for you..."
+				#create a new vpn.conf
+				REALHOSTNAMEVPN=`find /etc/openvpn/vpn -maxdepth 1 -name "eneco*.crt" | cut -d\/ -f5 | cut -d\. -f1`
+				echo "Creating new vpn.conf with hostname: $REALHOSTNAMEVPN"
+				cat <<'EOT' > /tmp/vpn.conf
+tls-client
+dev tap0
+proto tcp-client
+#port handled by vpn_port.conf
+config /etc/openvpn/vpn_port.conf
+pull
+ca      /etc/openvpn/vpn/ca.crt
+cert    /etc/openvpn/vpn/blabla.crt
+key     /etc/openvpn/vpn/blabla.key
+tls-auth /etc/openvpn/vpn/ta.key 1
+persist-key
+persist-tun
+ping 10
+ping-restart 60
+tls-exit
+writepid /var/run/openvpn-vpn.pid
+management 127.0.0.1 8000
+#management-hold set dynamically by netcon if needed
+verb 1
+# Empty
+EOT
+				sed -i "s~blabla~$REALHOSTNAMEVPN~g" /tmp/vpn.conf
+				cp /tmp/vpn.conf /etc/openvpn/vpn.conf
+				echo "New vpn.conf with hostname: $REALHOSTNAMEVPN created"
+		fi
+	fi
+
+
 	NEEDVPNUPDATE=false
 	if grep -q nxt /etc/opkg/arch.conf
 	then

@@ -35,18 +35,6 @@ usage() {
 autoUpdate() {
 	MD5ME=`/usr/bin/md5sum $0 | cut -d\  -f1`
 	MD5ONLINE=`curl --compressed -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/main/update-rooted.md5 | cut -d\  -f1`
-	if [ !  "$MD5ME" == "$MD5ONLINE" ]
-	then
-		echo "Warning: there is a new version of update-rooted.sh available! Do you want me to download it for you (yes/no)?" 
-		if ! $UNATTENDED ; then read QUESTION ; fi	
-		if [  "$QUESTION" == "yes" ] &&  ! $UNATTENDED #no auto update in unattended mode
-		then
-			curl --compressed -Nks https://raw.githubusercontent.com/ToonSoftwareCollective/update-rooted/main/update-rooted.sh -o $0
-			echo "Ok I downloaded the update. Restarting..." 
-			/bin/sh $0 $@
-			exit
-		fi
-	fi
 }
 
 

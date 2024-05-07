@@ -619,15 +619,7 @@ downloadUpgradeFile() {
 		MD5SCRIPT="34db70c584e9a75bd8404bb306a4ee5a"
 	fi
 	MD5NOW=`/usr/bin/md5sum $PKGCACHE/upgrade-$ARCH.sh | cut -d\  -f1`
-	if [ !  "$MD5NOW" == "$MD5SCRIPT" ]  && $ORIGINALSOURCE
-	then
-		echo "Warning: upgrade script from Eneco server is changed. Do you want to continue downloading the files (if not sure, type no and report in the forums)?" 
-		if ! $UNATTENDED ; then read QUESTION; fi	
-		if [ ! "$QUESTION" == "yes" ] || $UNATTENDED  #also exit when untattended
-		then
-			exitFail
-		fi
-	fi
+
 
 	#remove auto execute feature
 	/bin/sed -i 's/^\(FEATURES=.*\)AUTO_EXECUTE/\1/' $PKGCACHE/upgrade-$ARCH.sh 
